@@ -15,21 +15,45 @@ public:
 private:
 };
 
-class Encoder {
+class Encoder : public torch::nn::Module {
 public:
-    Encoder(torch::Tensor input, int context_len, int embedding_dim, int parameter_dim)
+    Encoder(int context_len, int embedding_dim, int parameter_dim)
         : context_len(context_len),
           embedding_dim(embedding_dim),
           parameter_dim(parameter_dim),
-          attention_head(context_len, embedding_dim, parameter_dim) {}
+          attention_head(context_len, embedding_dim, parameter_dim),
+          L1(torch::nn::Linear(context_len, embedding_dim))
+          {
+            register_module("L1", L1);
+          }
+
+    torch::Tensor encode(torch::Tensor x) {
+        torch::Tensor mask = attention_head.attention(x);
+
+        x += mask;
+        std::vector<int64_t> x_dim = {x.size(1)};
+        x = torch::nn::functional::layer_norm(x, x_dim); 
+
+        auto L1_out = L1->forward(x);
+
+        x += L1_out;
+        return torch::nn::functional::layer_norm(x, x_dim);
+    }
 
 private:
     int context_len;
     int embedding_dim;
     int parameter_dim;
+    torch::nn::Linear L1{nullptr};
     AttentionHead attention_head;  
 };
 
+class Decoder : public torch::nn::Module {
+public:
+
+private:
+
+};
 
 class AttentionHead : public torch::nn::Module {
 public:
