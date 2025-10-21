@@ -123,7 +123,7 @@ private:
     std::shared_ptr<Decoder> decoder;
 };
 
-// Decoder-only transformer for language modeling
+// For the language model
 class DecoderOnlyTransformer : public torch::nn::Module {
 public:
     DecoderOnlyTransformer(int context_len, int embedding_dim, int num_heads, int num_layers, float dropout_p = 0.1);
