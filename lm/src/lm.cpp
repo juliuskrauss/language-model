@@ -250,7 +250,7 @@ void train_language_model(
     DataLoader& train_loader,
     int num_epochs,
     float learning_rate,
-    const std::string& checkpoint_dir = "../models/",
+    const std::string& checkpoint_dir = "lm/models/",
     int log_interval = 10
 ) {
     model.train();
