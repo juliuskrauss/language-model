@@ -267,6 +267,7 @@ void train_language_model(
     for (int epoch = 0; epoch < num_epochs; ++epoch) {
         train_loader.reset();
         float epoch_loss = 0.0;
+        float epoch_perplexity = 0.0;
         int batch_count = 0;
         
         while (train_loader.has_next()) {
@@ -288,6 +289,10 @@ void train_language_model(
             
             auto loss = torch::nn::functional::cross_entropy(logits_flat, target_flat);
             
+            // Calculate perplexity
+            float batch_loss = loss.item<float>();
+            float batch_perplexity = std::exp(batch_loss);
+            
             loss.backward();
             
             // Gradient clipping
@@ -295,22 +300,31 @@ void train_language_model(
             
             optimizer.step();
             
-            epoch_loss += loss.item<float>();
+            epoch_loss += batch_loss;
+            epoch_perplexity += batch_perplexity;
             batch_count++;
             
             // Log progress
             if (batch_count % log_interval == 0) {
                 float avg_loss = epoch_loss / batch_count;
+                float avg_perplexity = epoch_perplexity / batch_count;
                 std::cout << "Epoch [" << epoch + 1 << "/" << num_epochs 
                           << "], Batch [" << batch_count 
-                          << "], Loss: " << std::fixed << std::setprecision(4) << avg_loss << std::endl;
+                          << "], Loss: " << std::fixed << std::setprecision(4) << avg_loss 
+                          << ", Perplexity: " << std::setprecision(2) << avg_perplexity 
+                          << std::endl;
             }
         }
         
         float avg_epoch_loss = epoch_loss / batch_count;
+        float avg_epoch_perplexity = epoch_perplexity / batch_count;
+        
         std::cout << "\nEpoch [" << epoch + 1 << "/" << num_epochs 
-                  << "] completed. Average Loss: " << std::fixed << std::setprecision(4) 
+                  << "] completed." << std::endl;
+        std::cout << "  Average Loss: " << std::fixed << std::setprecision(4) 
                   << avg_epoch_loss << std::endl;
+        std::cout << "  Average Perplexity: " << std::setprecision(2) 
+                  << avg_epoch_perplexity << std::endl;
         
         // Save checkpoint
         std::string checkpoint_path = checkpoint_dir + "checkpoint_epoch_" + std::to_string(epoch + 1) + ".pt";
